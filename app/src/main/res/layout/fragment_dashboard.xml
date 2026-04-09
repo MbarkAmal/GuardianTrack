@@ -122,5 +122,17 @@
             android:textStyle="bold"
             android:padding="12dp"/>
 
+        <!-- DEBUG ONLY: simulate battery low -->
+        <Button
+            android:id="@+id/btnTestBatteryLow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="🧪 Test Battery Low"
+            android:backgroundTint="@android:color/holo_orange_dark"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:padding="12dp"/>
+
     </LinearLayout>
 </ScrollView>
