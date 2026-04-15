@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 
 @Entity(tableName = "incidents")
-data class Incident(
+data class IncidentEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val timestamp: Long,
     val type: String,

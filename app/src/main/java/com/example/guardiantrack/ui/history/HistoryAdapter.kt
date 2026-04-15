@@ -4,13 +4,13 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.guardiantrack.databinding.ItemHistoryBinding
-import com.example.guardiantrack.data.model.Incident
+import com.example.guardiantrack.data.model.IncidentEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class HistoryAdapter(
-    private val list: MutableList<Incident>
+    private val list: MutableList<IncidentEntity>
 ) : RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder>() {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -36,6 +36,10 @@ class HistoryAdapter(
     }
 
     override fun getItemCount() = list.size
+
+    fun getItem(position: Int): IncidentEntity {
+        return list[position]
+    }
 
     // for swipe delete
     fun removeItem(position: Int) {

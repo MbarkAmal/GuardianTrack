@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.GuardianTrack" parent="Theme.AppCompat.Light.NoActionBar"/>
+    <!-- Base application theme. -->
+    <style name="Theme.GuardianTrack" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Main theme colors -->
+        <item name="colorPrimary">#E53935</item>
+        <item name="colorSecondary">#1A1A2E</item>
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
+    </style>
 </resources>

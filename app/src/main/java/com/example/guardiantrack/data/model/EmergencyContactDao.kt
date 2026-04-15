@@ -17,4 +17,7 @@ interface EmergencyContactDao {
 
     @Query("SELECT * FROM emergency_contacts")
     fun getAllContacts(): Flow<List<EmergencyContactEntity>>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM emergency_contacts WHERE phoneNumber = :number)")
+    suspend fun exists(number: String): Boolean
 }

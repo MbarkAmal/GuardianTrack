@@ -2,10 +2,28 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Custom permission protecting the EmergencyContact ContentProvider.
+         protectionLevel="signature|privileged" ensures ONLY apps signed with the same
+         certificate (or pre-installed system apps) can access emergency contact data.
+         This prevents 3rd-party apps from reading sensitive personal safety information. -->
+    <permission
+        android:name="com.guardian.track.READ_EMERGENCY_CONTACTS"
+        android:protectionLevel="signature|privileged" />
+
     <!-- Required on Android 13+ (API 33+) to post notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Required to listen for device boot up -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <!-- Required for the background sensor surveillance -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Specific type required on Android 14+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <application
+        android:name=".GuardianTrackApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -33,6 +51,27 @@
                 <action android:name="android.intent.action.BATTERY_LOW"/>
             </intent-filter>
         </receiver>
+
+        <!-- Receiver for booting up -->
+        <receiver android:name=".receiver.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+        
+        <!-- Foreground Service for background monitoring -->
+        <service android:name=".service.SurveillanceService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- ContentProvider exposing emergency contacts (read-only) -->
+        <provider
+            android:name=".provider.EmergencyContactProvider"
+            android:authorities="com.guardian.track.provider"
+            android:exported="true"
+            android:readPermission="com.guardian.track.READ_EMERGENCY_CONTACTS"
+            android:grantUriPermissions="false" />
 
     </application>
 

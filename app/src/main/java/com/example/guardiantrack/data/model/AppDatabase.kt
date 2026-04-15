@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 
 @Database(
-    entities = [Incident::class, EmergencyContactEntity::class],
+    entities = [IncidentEntity::class, EmergencyContactEntity::class],
     version = 1,
     exportSchema = false
 )
