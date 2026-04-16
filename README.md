@@ -1,38 +1,43 @@
 # GuardianTrack 🛡️
 
-GuardianTrack is a robust safety monitoring application designed to detect falls using device sensors and alert emergency contacts automatically.
+GuardianTrack is a mobile safety system for Android that detects falls and low battery events to alert emergency contacts.
 
-## ✨ Features
-*   **Real-time Fall Detection**: Advanced accelerometer-based detection (§2.2 Spec compliant).
-*   **Background Protection**: Reliable Foreground Service that stays active even when the app is closed.
-*   **Auto-Resume on Boot**: Automatically restarts protection after a device reboot.
-*   **Emergency Contacts**: Manage multiple safety contacts stored in a local encrypted database.
-*   **Incident History**: Full log of detected incidents with date, time, and (optional) GPS data.
-*   **Dynamic Sensitivity**: Adjust detection thresholds to match individual needs.
+## 🛠️ Prerequisites
+*   **Android Studio**: Ladybug (2024.2.1) or newer.
+*   **JDK**: Version 17.
+*   **Android SDK**: Target 36 (Android 15), Min 26 (Android 8.0).
+*   **Hardware**: Physical device with an **Accelerometer** and **GPS**.
 
-## 🛠️ Build Instructions
-### Prerequisites
-*   **Android Studio**: Hedgehog (2023.1.1) or newer.
-*   **JDK**: Version 17 or higher.
-*   **Device**: Android 8.0 (Oreo) minimum; Android 14 (UPSIDE_DOWN_CAKE) fully supported.
+## 🏗️ Architecture (MVVM)
+The project follows a clean **Model-View-ViewModel** architecture:
 
-### Steps
-1.  **Clone** the repository.
-2.  Open the project in **Android Studio**.
-3.  Ensure **Gradle** syncs successfully.
-4.  Build the project: `Build > Make Project` (or `Ctrl+F9`).
-5.  Run on a physical device (recommended for sensor testing).
+```mermaid
+graph TD
+    UI[Fragments / Activity] --> VM[ViewModels]
+    VM --> REPO[Repository]
+    REPO --> ROOM[Room Database]
+    REPO --> DS[Jetpack DataStore]
+    REPO --> GPS[Fused Location API]
+    Service[SurveillanceService] --> REPO
+```
 
-## ⚙️ Configuration
-### Permission Requirements
-Upon first launch, the app will request:
-- **Notifications**: To show monitoring status and alerts.
-- **Location**: To pinpoint incident locations.
+- **UI**: Dashboard, History, and Settings.
+- **ViewModels**: Manage state and logic for each screen.
+- **Repository**: Central source of truth for location and incident data.
+- **SurveillanceService**: A Foreground Service that handles real-time fall detection on a dedicated background thread.
 
-### Notification Channels
-The app uses two distinct channels:
-1.  **Monitor Status** (Low Priority): A silent notification showing the service is active.
-2.  **Fall Alerts** (High Importance): A loud, vibrating notification that pops up when a fall is detected.
+## 📦 Core Dependencies
+- **Hilt**: Dependency injection.
+- **Room**: Local incident storage.
+- **DataStore**: Encrypted preferences.
+- **Play Services Location**: Real-time GPS coordinates.
+- **Coroutine/Flow**: Asynchronous stream processing.
 
-## 🏗️ Architecture
-For deep technical details on the MVVM structure, Dependency Injection (Hilt), and the detection algorithm, please refer to the [Architecture Guide](file:///d:/GuardianTrack/Architecture_Guide.md).
+## 🚀 How to Build
+1.  Open the project in **Android Studio**.
+2.  Wait for **Gradle** sync.
+3.  Connect a physical Android device.
+4.  Click **Run** (`Shift+F10`) or **Build** (`Ctrl+F9`).
+
+---
+*For a deeper dive into the physics of the fall detection algorithm (§2.2), see the [Architecture Guide](file:///d:/GuardianTrack/Architecture_Guide.md).*
