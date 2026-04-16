@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
@@ -41,8 +42,21 @@ class SettingsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupContactsList()
+        setupSensitivitySlider()
         observeViewModel()
         setupSaveButton()
+    }
+
+    private fun setupSensitivitySlider() {
+        binding.sbSensitivity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                // Slider is 0-15. Map to 10-25 m/s²
+                val threshold = progress + 10
+                binding.tvSensitivityValue.text = "$threshold m/s²"
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupContactsList() {
@@ -98,6 +112,16 @@ class SettingsFragment : Fragment() {
                     }
                 }
 
+                // Sensitivity Threshold
+                launch {
+                    viewModel.sensitivityThreshold.collect { threshold ->
+                        // Reverse mapping: 10-25 -> 0-15
+                        val progress = (threshold - 10).toInt().coerceIn(0, 15)
+                        binding.sbSensitivity.progress = progress
+                        binding.tvSensitivityValue.text = "${threshold.toInt()} m/s²"
+                    }
+                }
+
                 // Contacts List
                 launch {
                     viewModel.contacts.collect { contactsList ->
@@ -125,8 +149,9 @@ class SettingsFragment : Fragment() {
     private fun setupSaveButton() {
         binding.btnSaveSettings.setOnClickListener {
             val darkMode = binding.switchDarkMode.isChecked
+            val threshold = (binding.sbSensitivity.progress + 10).toFloat()
 
-            viewModel.saveSettings(darkMode)
+            viewModel.saveSettings(darkMode, threshold)
 
             // Apply dark mode immediately
             val mode = if (darkMode) AppCompatDelegate.MODE_NIGHT_YES

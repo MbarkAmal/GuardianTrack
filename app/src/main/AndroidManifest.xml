@@ -20,7 +20,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- Specific type required on Android 14+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
 
     <application
         android:name=".GuardianTrackApp"
@@ -63,7 +63,7 @@
         <!-- Foreground Service for background monitoring -->
         <service android:name=".service.SurveillanceService"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="health" />
 
         <!-- ContentProvider exposing emergency contacts (read-only) -->
         <provider

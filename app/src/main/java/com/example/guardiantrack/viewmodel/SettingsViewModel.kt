@@ -23,10 +23,14 @@ class SettingsViewModel @Inject constructor(
     val darkModeActive = preferenceManager.darkModeActive
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    val sensitivityThreshold = preferenceManager.sensitivityThreshold
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 15.0f)
+
     // Save dark mode setting
-    fun saveSettings(darkMode: Boolean) {
+    fun saveSettings(darkMode: Boolean, sensitivity: Float) {
         viewModelScope.launch {
             preferenceManager.saveDarkMode(darkMode)
+            preferenceManager.saveSensitivityThreshold(sensitivity)
         }
     }
 

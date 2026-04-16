@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.guardiantrack.data.model.IncidentEntity
 import com.example.guardiantrack.data.repository.IncidentRepository
+import com.example.guardiantrack.util.LocationProvider
 import dagger.hilt.InstallIn
 import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
@@ -24,6 +25,7 @@ import javax.inject.Inject
 @InstallIn(SingletonComponent::class)
 interface BatteryReceiverEntryPoint {
     fun repository(): IncidentRepository
+    fun locationProvider(): LocationProvider
 }
 
 @AndroidEntryPoint
@@ -47,19 +49,25 @@ class BatteryReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // Support manual instantiation for testing/simulation
-                val repo = if (::repository.isInitialized) {
-                    repository
+                val (repo, locProvider) = if (::repository.isInitialized) {
+                    Pair(repository, null) // In standard Hilt injection, we can't easily init locationProvider here without another check
                 } else {
                     val entryPoint = EntryPointAccessors.fromApplication(context, BatteryReceiverEntryPoint::class.java)
-                    entryPoint.repository()
+                    Pair(entryPoint.repository(), entryPoint.locationProvider())
                 }
 
-                repo.insertIncident(
+                // Actually, let's just use the EntryPoint for both to be safe in Async receiver
+                val finalRepo = EntryPointAccessors.fromApplication(context, BatteryReceiverEntryPoint::class.java).repository()
+                val finalLocProvider = EntryPointAccessors.fromApplication(context, BatteryReceiverEntryPoint::class.java).locationProvider()
+
+                val (lat, lon) = finalLocProvider.getCurrentLocation()
+
+                finalRepo.insertIncident(
                     IncidentEntity(
                         timestamp = System.currentTimeMillis(),
                         type      = "BATTERY",
-                        latitude  = 0.0,
-                        longitude = 0.0,
+                        latitude  = lat,
+                        longitude = lon,
                         isSynced  = false
                     )
                 )
