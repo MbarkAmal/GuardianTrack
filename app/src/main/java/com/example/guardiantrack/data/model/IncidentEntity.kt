@@ -11,5 +11,6 @@ data class IncidentEntity(
     val type: String,
     val latitude: Double,
     val longitude: Double,
+    val address: String? = null,
     val isSynced: Boolean = false
 )

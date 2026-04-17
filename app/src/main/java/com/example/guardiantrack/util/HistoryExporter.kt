@@ -15,7 +15,7 @@ object HistoryExporter {
 
     fun exportToCsv(context: Context, incidents: List<IncidentEntity>): Boolean {
         val fileName = "GuardianTrack_History_${System.currentTimeMillis()}.csv"
-        val header = "ID;Date;Time;Type;Latitude;Longitude;Sync Status\n"
+        val header = "ID;Date;Time;Type;Latitude;Longitude;Address;Sync Status\n"
         val data = buildString {
             append(header)
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -25,7 +25,7 @@ object HistoryExporter {
                 val dateStr = dateFormat.format(Date(incident.timestamp))
                 val timeStr = timeFormat.format(Date(incident.timestamp))
                 val syncStatus = if (incident.isSynced) "Synced" else "Pending"
-                append("${incident.id};$dateStr;$timeStr;${incident.type};${incident.latitude};${incident.longitude};$syncStatus\n")
+                append("${incident.id};$dateStr;$timeStr;${incident.type};${incident.latitude};${incident.longitude};${incident.address ?: ""};$syncStatus\n")
             }
         }
         return saveFileToScopedStorage(context, fileName, "text/csv", data)
@@ -44,6 +44,7 @@ object HistoryExporter {
                 append("Date: $dateStr\n")
                 append("Type: ${incident.type}\n")
                 append("Location: ${incident.latitude}, ${incident.longitude}\n")
+                append("Address: ${incident.address ?: "N/A"}\n")
                 append("Status: $syncStatus\n")
                 append("------------------------------------\n")
             }

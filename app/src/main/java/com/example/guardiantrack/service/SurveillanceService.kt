@@ -21,13 +21,16 @@ import androidx.core.app.NotificationCompat
 import com.example.guardiantrack.data.MonitoringManager
 import com.example.guardiantrack.data.PreferenceManager
 import com.example.guardiantrack.data.model.IncidentEntity
+import com.example.guardiantrack.data.repository.EmergencyContactRepository
 import com.example.guardiantrack.data.repository.IncidentRepository
 import com.example.guardiantrack.util.LocationProvider
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import android.telephony.SmsManager
 import javax.inject.Inject
 import kotlin.math.sqrt
 
@@ -42,6 +45,9 @@ class SurveillanceService : Service(), SensorEventListener {
 
     @Inject
     lateinit var preferenceManager: PreferenceManager
+
+    @Inject
+    lateinit var contactRepository: EmergencyContactRepository
 
     @Inject
     lateinit var locationProvider: LocationProvider
@@ -77,10 +83,10 @@ class SurveillanceService : Service(), SensorEventListener {
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel()
-        setupSensors()
-        startPeriodicUpdates()
-        observePreferences()
+        createNotificationChannel() //
+        setupSensors() //accelerometer
+        startPeriodicUpdates()  //garde the battery
+        observePreferences() // sensitivity
     }
 
     private fun observePreferences() {
@@ -217,6 +223,7 @@ class SurveillanceService : Service(), SensorEventListener {
         serviceScope.launch {
             // Fetch real location as per spec §4.1
             val (lat, lon) = locationProvider.getCurrentLocation()
+            val address = locationProvider.getAddressFromLocation(lat, lon)
             
             repository.insertIncident(
                 IncidentEntity(
@@ -224,10 +231,62 @@ class SurveillanceService : Service(), SensorEventListener {
                     type = type,
                     latitude = lat,
                     longitude = lon,
+                    address = address,
                     isSynced = false
                 )
             )
+            if (type == "FALL") {
+                sendSmsAlerts(lat, lon, address)
+            }
             monitoringManager.updateState { it.copy(lastIncidentType = type) }
+        }
+    }
+
+    private suspend fun sendSmsAlerts(lat: Double, lon: Double, address: String) {
+        try {
+            val contacts = contactRepository.getAllContacts().first()
+            if (contacts.isEmpty()) {
+                Log.w(TAG, "SMS: No emergency contacts found. Skipping alerts.")
+                return
+            }
+
+            val mapsLink = "https://www.google.com/maps/search/?api=1&query=$lat,$lon"
+            val message = "[GuardianTrack] ALERTE : Une chute a été détectée à l'emplacement suivant : $address. $mapsLink"
+            Log.d(TAG, "SMS: Preparing to send message (length: ${message.length}): $message")
+
+            // Get SmsManager safely based on Android version
+            val smsManager: SmsManager? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                this.getSystemService(SmsManager::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                SmsManager.getDefault()
+            }
+
+            if (smsManager == null) {
+                Log.e(TAG, "SMS: Failed to obtain SmsManager")
+                return
+            }
+
+            // Divide message into parts (necessary for messages > 160 chars)
+            val parts = smsManager.divideMessage(message)
+            Log.d(TAG, "SMS: Message divided into ${parts.size} parts")
+
+            for (contact in contacts) {
+                if (contact.phoneNumber.isBlank()) {
+                    Log.w(TAG, "SMS: Skipping contact ${contact.name} due to empty phone number")
+                    continue
+                }
+                
+                Log.d(TAG, "SMS: Sending alert to ${contact.name} (${contact.phoneNumber})")
+                try {
+                    smsManager.sendMultipartTextMessage(contact.phoneNumber, null, parts, null, null)
+                    Log.i(TAG, "SMS: Message successfully passed to system for delivery to ${contact.phoneNumber}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "SMS: Error sending to ${contact.phoneNumber}: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "SMS: Failed to send alerts: ${e.message}")
         }
     }
 

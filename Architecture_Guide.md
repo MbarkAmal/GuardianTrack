@@ -45,8 +45,65 @@ The app integrates `FusedLocationProviderClient` to attach precise coordinates t
 - **Strategy**: On every detection (Fall or Battery), the app attempts to fetch the current location with high accuracy.
 - **Sentinel Values**: If permission is denied or the GPS is disabled, the system follows a "safe-fail" strategy, recording **`0.0 / 0.0`** as coordinates. This allows the incident to be recorded for time/type even when location is unavailable.
 - **User Guidance**: A rationale dialog is displayed if permissions are missing, explaining the safety benefits of enabling location.
-- `FOREGROUND_SERVICE`: Essential for background execution.
-- `FOREGROUND_SERVICE_HEALTH`: Required for sensor access in background (Android 14+).
-- `RECEIVE_BOOT_COMPLETED`: Allows the app to auto-restart protection when the phone reboots.
-- `POST_NOTIFICATIONS`: Required to show alerts and the monitoring status (Android 13+).
-- `ACCESS_FINE_LOCATION`: Used to record GPS coordinates during an incident.
+- `FOREGROUND_SERVICE`: Essential for persistent background execution.
+- `FOREGROUND_SERVICE_HEALTH`: Required for sensor access in the background on Android 14+.
+- `RECEIVE_BOOT_COMPLETED`: Enables the `BootReceiver` to trigger `SurveillanceWorker` and restart protection after a reboot.
+- `POST_NOTIFICATIONS`: Ensures the user can see the mandatory status notification and receive impact alerts.
+- `ACCESS_FINE_LOCATION`: Allows capturing precise coordinates during an incident.
+- `ACCESS_BACKGROUND_LOCATION`: Required for "Allow all the time" access. This is the **most critical permission** as it allows the app to fetch location even when the phone is locked and the screen is off during a fall.
+- `SEND_SMS`: Allows the app to automatically notify emergency contacts with the incident details and location.
+
+---
+
+## 🗺 Visual Architecture
+
+### MVVM Architecture
+```mermaid
+graph TD
+    subgraph "View (UI)"
+        A[Screens / Fragments]
+    end
+
+    subgraph "ViewModel Layer"
+        B[ViewModels]
+        C[MonitoringManager]
+    end
+
+    subgraph "Repository Layer"
+        D[IncidentRepository]
+        E[EmergencyContactRepository]
+        F[PreferenceManager]
+    end
+
+    subgraph "Data Source"
+        G[(Room DB)]
+        H[(DataStore)]
+    end
+
+    A -- Observes --> B
+    B -- Requests --> D
+    B -- Requests --> E
+    D -- Query --> G
+    E -- Query --> G
+    F -- Access --> H
+    C -- Updates --> B
+```
+
+### Database Schema
+```mermaid
+erDiagram
+    incidents {
+        int id PK
+        long timestamp
+        string type
+        double latitude
+        double longitude
+        string address
+        boolean isSynced
+    }
+    emergency_contacts {
+        int id PK
+        string name
+        string phone_number
+    }
+```

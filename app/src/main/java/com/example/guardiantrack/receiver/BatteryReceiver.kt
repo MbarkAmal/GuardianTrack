@@ -61,6 +61,7 @@ class BatteryReceiver : BroadcastReceiver() {
                 val finalLocProvider = EntryPointAccessors.fromApplication(context, BatteryReceiverEntryPoint::class.java).locationProvider()
 
                 val (lat, lon) = finalLocProvider.getCurrentLocation()
+                val address = finalLocProvider.getAddressFromLocation(lat, lon)
 
                 finalRepo.insertIncident(
                     IncidentEntity(
@@ -68,6 +69,7 @@ class BatteryReceiver : BroadcastReceiver() {
                         type      = "BATTERY",
                         latitude  = lat,
                         longitude = lon,
+                        address   = address,
                         isSynced  = false
                     )
                 )
